@@ -46,8 +46,8 @@ export class WorkspaceController {
         await this.archiveWorkspaceUseCase.execute(slug)
     }
 
-    @Put('/:slug')
-    async updateWorkspace(@Param('slug') slug: string, @Body() request: UpdateWorkspaceValidatorDto) {
+    @Put('/')
+    async updateWorkspace(@Query('slug') slug: string, @Body() request: UpdateWorkspaceValidatorDto) {
         return await this.updateWorkspaceUseCase.execute({ slug, ...request })
     }
 
