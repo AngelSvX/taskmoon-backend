@@ -33,7 +33,7 @@ model roles {
 }
 
 model user_credentials {
-  user_id             BigInt    @id @db.UnsignedBigInt
+  user_id             Int       @id @db.UnsignedInt
   password_hash       String    @db.VarChar(255)
   password_changed_at DateTime  @default(now()) @db.DateTime(0)
   failed_attempts     Int       @default(0) @db.UnsignedInt
@@ -42,18 +42,18 @@ model user_credentials {
 }
 
 model user_roles {
-  user_id BigInt @db.UnsignedBigInt
-  role_id Int    @db.UnsignedSmallInt
-  roles   roles  @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_user_roles_role")
-  users   users  @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_user_roles_user")
+  user_id Int   @db.UnsignedInt
+  role_id Int   @db.UnsignedSmallInt
+  roles   roles @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_user_roles_role")
+  users   users @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_user_roles_user")
 
   @@id([user_id, role_id])
   @@index([role_id], map: "fk_user_roles_role")
 }
 
 model user_sessions {
-  id           BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
-  user_id      BigInt    @db.UnsignedBigInt
+  id           Int       @id @default(autoincrement()) @db.UnsignedInt
+  user_id      Int       @db.UnsignedInt
   token_hash   String    @unique(map: "uq_sessions_token") @db.VarChar(512)
   ip_address   String?   @db.VarChar(45)
   user_agent   String?   @db.VarChar(512)
@@ -68,23 +68,24 @@ model user_sessions {
 }
 
 model users {
-  id                BigInt            @id @default(autoincrement()) @db.UnsignedBigInt
-  email             String            @unique(map: "uq_users_email") @db.VarChar(320)
-  username          String?           @unique(map: "uq_users_username") @db.VarChar(100)
-  display_name      String?           @db.VarChar(150)
-  status            users_status      @default(active)
-  email_verified_at DateTime?         @db.DateTime(0)
-  created_at        DateTime          @default(now()) @db.DateTime(0)
-  updated_at        DateTime          @default(now()) @db.DateTime(0)
+  id                Int                @id @default(autoincrement()) @db.UnsignedInt
+  email             String             @unique(map: "uq_users_email") @db.VarChar(320)
+  username          String?            @unique(map: "uq_users_username") @db.VarChar(100)
+  display_name      String?            @db.VarChar(150)
+  status            users_status       @default(active)
+  email_verified_at DateTime?          @db.DateTime(0)
+  created_at        DateTime           @default(now()) @db.DateTime(0)
+  updated_at        DateTime           @default(now()) @db.DateTime(0)
   user_credentials  user_credentials?
   user_roles        user_roles[]
   user_sessions     user_sessions[]
   workspaces        workspace[]
+  workspace_members workspace_member[]
 }
 
 model workspace {
-  id          BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
-  ownerId     BigInt          @map("owner_id") @db.UnsignedBigInt
+  id          Int             @id @default(autoincrement()) @db.UnsignedInt
+  ownerId     Int             @map("owner_id") @db.UnsignedInt
   name        String          @db.VarChar(120)
   description String?
   icon        String?
@@ -95,10 +96,41 @@ model workspace {
   updatedAt   DateTime        @updatedAt @map("updated_at")
   deletedAt   DateTime?       @map("deleted_at")
 
-  owner users @relation(fields: [ownerId], references: [id])
+  workspace_member workspace_member[]
+  owner            users              @relation(fields: [ownerId], references: [id])
 
   @@index([ownerId])
   @@map("workspaces")
+}
+
+model workspace_role {
+  id          Int    @id @default(autoincrement()) @db.UnsignedSmallInt
+  name        String @unique @db.VarChar(50) // owner, admin, member, viewer
+  permissions Json? // o tabla aparte si crece
+
+  members workspace_member[]
+
+  @@map("workspace_roles")
+}
+
+model workspace_member {
+  workspaceId Int      @map("workspace_id") @db.UnsignedInt
+  userId      Int      @map("user_id") @db.UnsignedInt
+  roleId      Int      @map("role_id") @db.UnsignedSmallInt
+  joinedAt    DateTime @default(now()) @map("joined_at")
+
+  workspace workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      users          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      workspace_role @relation(fields: [roleId], references: [id])
+
+  @@id([workspaceId, userId])
+  @@index([userId])
+  @@map("workspace_members")
+}
+
+model task_priority {
+  id   Int    @id @default(autoincrement()) @db.UnsignedTinyInt
+  name String @unique @db.VarChar(30)
 }
 
 enum WorkspaceStatus {
@@ -111,4 +143,3 @@ enum users_status {
   inactive
   suspended
 }
-
