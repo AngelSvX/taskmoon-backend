@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `workspace_members` ADD COLUMN `invited_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3);

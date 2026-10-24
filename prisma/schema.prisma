@@ -118,6 +118,7 @@ model workspace_member {
   userId      Int      @map("user_id") @db.UnsignedInt
   roleId      Int      @map("role_id") @db.UnsignedSmallInt
   joinedAt    DateTime @default(now()) @map("joined_at")
+  invitedAt   DateTime @default(now()) @map("invited_at")
 
   workspace workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   user      users          @relation(fields: [userId], references: [id], onDelete: Cascade)
